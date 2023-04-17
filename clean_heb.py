@@ -30,25 +30,16 @@ def rmg_toolong(x,length = 12):
     else:
         return False
 
-def rmg_bad_alnum_ratio(x,threshold = 0.5):
+def rmg_bad_alnum_ratio(x,threshold = 0.8):
     str_len = len(x)
 
-    nchar_alphanum = len(re.findall("[\u0590-\u05FF-Z0-9]", x))
-
+    nchar_alphanum = len(re.findall("[\u0590-\u05FF0-9a-zA-z]", x))
+    
     if (nchar_alphanum / str_len) <=threshold:
         return True
     else:
         return False
 
-def rmg_consecutive_four_identical(x, n = 4):
-
-
-    inds = rle(x)
-    
-    if any(inds > n):
-        return True
-    else:
-        return False
 
 def rmg_consecutive_three_identical(x, n = 3):
 
@@ -83,28 +74,54 @@ def rmg_three_finals(x):
 
 def split_finals(x):
     num_finals = 0
-    
     for position,c in enumerate(list(x)):
         if c in finals and position<len(x)-1:
             x = x[:position+1] + ' ' + x[position+1:]
             break
     return x
-    
+
+def rmg_no_heb(x):
+    nchar_heb = len(re.findall("[\u0590-\u05FF]", x))
+    if nchar_heb<1:
+        return True
+    else:
+        return False
+
 
 def clean(x):
     if any([
-        rmg_three_finals(x),
-      rmg_bad_alnum_ratio(x),
-      rmg_consecutive_three_identical(x),
-      #rmg_bad_consonant_vowel_ratio(x),
-      #rmg_consecutive_four_identical(x),
-      rmg_has_two_distinct_puncts_inside(x),
-      #rmg_has_uppercase_within_lowercase(x),
-      rmg_toolong(x),
-      #rmg_uppercase_lowercase_ratio(x)
+    rmg_no_heb(x),
+    rmg_three_finals(x),
+    rmg_bad_alnum_ratio(x),
+    rmg_consecutive_three_identical(x),
+    #rmg_bad_consonant_vowel_ratio(x),
+    #rmg_consecutive_four_identical(x),
+    rmg_has_two_distinct_puncts_inside(x),
+    #rmg_has_uppercase_within_lowercase(x),
+    rmg_toolong(x),
+    #rmg_uppercase_lowercase_ratio(x)
     ]):
-        return ''
+        return ' '
     else:
         return split_finals(x)
 
 
+def clean_text(text):
+    clean_text = ''
+    text = text.replace('\n',' ').replace('\t',' ')
+    text = re.sub(' +', ' ', text)
+    
+    sents = re.split(r'\.|\?|\!', text)
+    for sent in sents:
+        clean_sent = ''
+        for w in sent.split(' '):
+            if not len(w):
+                continue
+            c = clean(w.strip())
+            clean_sent = clean_sent +' '+c
+        clean_text = clean_text+'\n'+clean_sent
+    clean_text = re.sub(r'\n\s*\n', '\n', clean_text)
+    clean_text = re.sub(' +', ' ', clean_text)
+    return clean_text
+
+print(clean(' פ ,16מ11'))
